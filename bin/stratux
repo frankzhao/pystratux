@@ -1,0 +1,5 @@
+#! python
+from stratux import Stratux
+
+if __name__ == '__main__':
+    Stratux().launch()
