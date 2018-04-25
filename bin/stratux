@@ -1,5 +1,17 @@
 #! python
+import logging
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
 from stratux import Stratux
 
 if __name__ == '__main__':
-    Stratux().launch()
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info("Creating database connection")
+
+    engine = create_engine('postgresql+psycopg2://stratux:stratux@localhost:5432/stratux', echo=True)
+    Session = sessionmaker(bind=engine)
+    session = Session()  # type: sqlalchemy.orm.session.Session
+
+    logger.info("Launching stratux")
+    Stratux(session).launch()
