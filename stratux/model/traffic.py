@@ -25,7 +25,7 @@ class Traffic(Base):
     lat = Column(Float)
     lng = Column(Float)
     alt = Column(Integer)
-    gnssdifffrombaroalt = Column(Boolean)
+    gnssdifffrombaroalt = Column(Integer)
     altisgnss = Column(String)
     nic = Column(Integer)
     nacp = Column(Integer)
@@ -48,4 +48,43 @@ class Traffic(Base):
     bearing = Column(Integer)
     distance = Column(Integer)
 
-
+    def __init__(self, id, icao_addr, reg, tail, emitter_category, onground, addr_type, targettype, signallevel, squawk,
+                 position_valid, lat, lng, alt, gnssdifffrombaroalt, altisgnss, nic, nacp, track, speed, speed_valid,
+                 vvel, timestamp, prioritystatus, age, agelastalt, last_seen, last_alt, last_gnssdiff, last_gnssdiffalt,
+                 last_speed, last_source, extrapolatedposition, bearingdist_valid, bearing, distance):
+        self.id = id
+        self.icao_addr = icao_addr
+        self.reg = reg
+        self.tail = tail
+        self.emitter_category = emitter_category
+        self.onground = onground
+        self.addr_type = addr_type
+        self.targettype = targettype
+        self.signallevel = signallevel
+        self.squawk = squawk
+        self.position_valid = position_valid
+        self.lat = lat
+        self.lng = lng
+        self.alt = alt
+        self.gnssdifffrombaroalt = gnssdifffrombaroalt
+        self.altisgnss = altisgnss
+        self.nic = nic
+        self.nacp = nacp
+        self.track = track
+        self.speed = speed
+        self.speed_valid = speed_valid
+        self.vvel = vvel
+        self.timestamp = timestamp
+        self.prioritystatus = prioritystatus
+        self.age = age
+        self.agelastalt = agelastalt
+        self.last_seen = last_seen
+        self.last_alt = last_alt
+        self.last_gnssdiff = last_gnssdiff
+        self.last_gnssdiffalt = last_gnssdiffalt
+        self.last_speed = last_speed
+        self.last_source = last_source
+        self.extrapolatedposition = extrapolatedposition
+        self.bearingdist_valid = bearingdist_valid
+        self.bearing = bearing
+        self.distance = distance

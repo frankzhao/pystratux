@@ -2,3 +2,11 @@ asyncio
 websockets
 alembic
 psycopg2
+matplotlib
+basemap
+Pillow >= 5.0.0
+
+# NOTE: bash specific expansions in setup script
+# pip install https://github.com/matplotlib/basemap/archive/v1.1.0.zip
+# sudo dnf install redhat-rpm-config geos-devel python3-devel python3-tkinter
+# PIL (http://www.pythonware.com/products/pil)

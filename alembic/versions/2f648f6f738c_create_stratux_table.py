@@ -72,7 +72,7 @@ def upgrade():
         sa.Column('lat', sa.Float, nullable=True),
         sa.Column('lng', sa.Float, nullable=True),
         sa.Column('alt', sa.Integer, nullable=True),
-        sa.Column('gnssdifffrombaroalt', sa.Boolean, nullable=True),
+        sa.Column('gnssdifffrombaroalt', sa.Integer, nullable=True),
         sa.Column('altisgnss', sa.String, nullable=True),
         sa.Column('nic', sa.Integer, nullable=True),
         sa.Column('nacp', sa.Integer, nullable=True),

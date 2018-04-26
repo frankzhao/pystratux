@@ -13,5 +13,7 @@ if __name__ == '__main__':
     Session = sessionmaker(bind=engine)
     session = Session()  # type: sqlalchemy.orm.session.Session
 
+    logging.getLogger('sqlalchemy').setLevel(logging.WARN)
+
     logger.info("Launching stratux")
     Stratux(session).launch()
