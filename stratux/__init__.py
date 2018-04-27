@@ -29,12 +29,7 @@ class Stratux:
         self.logger.info('Connecting to stratux')
         async with websockets.connect(self.stratux_uri) as websocket:
             self.logger.info('Connected.')
-            # traffic = Traffic(lng=174.7762, lat=-41.2865)
-            # self.update_map(traffic, 'text', clear=False)
             while True:
-                # self.update_map(traffic, 'text', clear=True)
-                # traffic.lng += 0.01
-                # traffic.lat += 0.01
                 packet = await websocket.recv()
                 logging.debug('Received packet: {}'.format(packet))
 
@@ -42,17 +37,18 @@ class Stratux:
                 entry_lowered = dict((k.lower(), v) for k, v in entry.items())
                 traffic = Traffic(**entry_lowered)
                 self.curr_traffic[traffic.icao_addr] = traffic
+
                 self.session.add(traffic)
                 self.session.commit()
 
-                self.update_map(traffic, self.generate_label(traffic), clear=False)
+                self.update_map(traffic, clear=False)
 
     @staticmethod
     def generate_label(traffic):
         label = '{} {}\n{} {}@{}'.format(
             traffic.squawk if traffic.squawk else traffic.icao_addr,
             str(round(traffic.age, 1)) + 's',
-            traffic.tail if traffic.tail else '?',
+            traffic.tail if traffic.tail else traffic.reg,
             str(traffic.track) if traffic.track else '?',
             str(traffic.speed if traffic.speed else '?') + "kts"
         )
@@ -76,7 +72,7 @@ class Stratux:
         plt.show(block=False)
         plt.pause(0.1)
 
-    def update_map(self, traffic, label, clear=False):
+    def update_map(self, traffic, clear=False):
         lat = traffic.lat
         lng = traffic.lng
         if lat == 0 and lng == 0:
@@ -86,36 +82,41 @@ class Stratux:
 
         # update annotations
         if traffic.icao_addr in self.annotations:
-            self.annotations[traffic.icao_addr].set_position(self.plt_map(traffic.lng, traffic.lat))
+            # self.annotations[traffic.icao_addr].set_position(self.plt_map(traffic.lng, traffic.lat))
+            self.annotations[traffic.icao_addr].xy = (self.plt_map(traffic.lng, traffic.lat))
             plt.draw()
             # plt.pause(0.3)
 
+        self.reap_traffic()
         if clear and self.scatter:
             self.scatter.remove()
             plt.draw()
-        self.scatter = self.plt_map.scatter(*zip(*self.curr_points.values()), latlon=True, marker='+')
+        self.scatter = self.plt_map.scatter(*zip(*self.curr_points.values()), latlon=True, marker='+', c='red')
 
         # annotate
         for t in self.curr_traffic.values():    # type: Traffic
-            ann = plt.annotate(self.generate_label(t), self.plt_map(t.lng, t.lat), xytext=(5, 5),
-                               textcoords='offset points',
-                               bbox=dict(boxstyle='round', fc='0.8', alpha=0.3))
-            self.annotations[t.icao_addr] = ann
+            if t.icao_addr not in self.annotations:
+                ann = plt.annotate(self.generate_label(t), self.plt_map(t.lng, t.lat), xytext=(5, 5),
+                                   textcoords='offset points', bbox=dict(boxstyle='round', fc='0.8', alpha=0.5))
+                self.annotations[t.icao_addr] = ann
+            else:
+                self.annotations[t.icao_addr].xy = self.plt_map(t.lng, t.lat)
             plt.draw()
 
         plt.pause(0.1)
-        self.reap_traffic()
 
     def reap_traffic(self):
         # remove stale traffic
         for k, t in self.curr_traffic.copy().items():    # type: Traffic
-            time_idle = datetime.utcfromtimestamp(datetime.now().timestamp()) - t.timestamp
+            time_idle = datetime.utcfromtimestamp(datetime.now().timestamp()) - \
+                        datetime.strptime(t.timestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
             seconds_idle = time_idle.total_seconds()
             if seconds_idle > 60:
+                self.logger.info("Reaping stale traffic: icao: {}, tail: {}".format(t.icao_addr, t.tail))
                 self.curr_traffic.pop(k)
                 if k in self.annotations:
                     ann = self.annotations.pop(k)
-                    ann.set_visible(False)
+                    ann.xy = (0, 0)
                     ann.remove()
                 if k in self.curr_points:
                     self.curr_points.pop(k)
