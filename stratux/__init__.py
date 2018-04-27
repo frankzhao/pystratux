@@ -35,6 +35,11 @@ class Stratux:
 
                 entry = json.JSONDecoder().decode(packet)  # type: dict
                 entry_lowered = dict((k.lower(), v) for k, v in entry.items())
+                self.logger.info("timestamp: {}".format(entry_lowered['timestamp']))
+                try:
+                    entry_lowered['timestamp'] = datetime.strptime(entry_lowered['timestamp'], '%Y-%m-%dT%H:%M:%S.%fZ')
+                except ValueError:
+                    entry_lowered['timestamp'] = datetime.strptime(entry_lowered['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
                 traffic = Traffic(**entry_lowered)
                 self.curr_traffic[traffic.icao_addr] = traffic
 
@@ -82,10 +87,8 @@ class Stratux:
 
         # update annotations
         if traffic.icao_addr in self.annotations:
-            # self.annotations[traffic.icao_addr].set_position(self.plt_map(traffic.lng, traffic.lat))
             self.annotations[traffic.icao_addr].xy = (self.plt_map(traffic.lng, traffic.lat))
             plt.draw()
-            # plt.pause(0.3)
 
         self.reap_traffic()
         if clear and self.scatter:
@@ -108,18 +111,18 @@ class Stratux:
     def reap_traffic(self):
         # remove stale traffic
         for k, t in self.curr_traffic.copy().items():    # type: Traffic
-            time_idle = datetime.utcfromtimestamp(datetime.now().timestamp()) - \
-                        datetime.strptime(t.timestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
+            time_idle = datetime.utcfromtimestamp(datetime.now().timestamp()) - t.timestamp
             seconds_idle = time_idle.total_seconds()
             if seconds_idle > 60:
                 self.logger.info("Reaping stale traffic: icao: {}, tail: {}".format(t.icao_addr, t.tail))
-                self.curr_traffic.pop(k)
+                del self.curr_traffic[k]
                 if k in self.annotations:
-                    ann = self.annotations.pop(k)
+                    ann = self.annotations.get(k)
                     ann.xy = (0, 0)
                     ann.remove()
+                    del self.annotations[k]
                 if k in self.curr_points:
-                    self.curr_points.pop(k)
+                    del self.curr_points[k]
                 plt.draw()
         plt.pause(0.1)
 
