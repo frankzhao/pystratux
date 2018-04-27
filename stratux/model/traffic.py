@@ -48,10 +48,13 @@ class Traffic(Base):
     bearing = Column(Integer)
     distance = Column(Integer)
 
-    def __init__(self, id, icao_addr, reg, tail, emitter_category, onground, addr_type, targettype, signallevel, squawk,
-                 position_valid, lat, lng, alt, gnssdifffrombaroalt, altisgnss, nic, nacp, track, speed, speed_valid,
-                 vvel, timestamp, prioritystatus, age, agelastalt, last_seen, last_alt, last_gnssdiff, last_gnssdiffalt,
-                 last_speed, last_source, extrapolatedposition, bearingdist_valid, bearing, distance):
+    def __init__(self, id=None, icao_addr=None, reg=None, tail=None, emitter_category=None, onground=None,
+                 addr_type=None, targettype=None, signallevel=None, squawk=None, position_valid=None, lat=None,
+                 lng=None, alt=None, gnssdifffrombaroalt=None, altisgnss=None, nic=None, nacp=None, track=None,
+                 speed=None, speed_valid=None, vvel=None, timestamp=None, prioritystatus=None, age=None,
+                 agelastalt=None, last_seen=None, last_alt=None, last_gnssdiff=None, last_gnssdiffalt=None,
+                 last_speed=None, last_source=None, extrapolatedposition=None, bearingdist_valid=None,
+                 bearing=None, distance=None):
         self.id = id
         self.icao_addr = icao_addr
         self.reg = reg

@@ -4,6 +4,7 @@ import logging
 import json
 import websockets
 import matplotlib.pyplot as plt
+from datetime import datetime
 from mpl_toolkits.basemap import Basemap
 from stratux.model.traffic import Traffic
 
@@ -15,8 +16,9 @@ class Stratux:
     ax = None
     plt_map = None
     scatter = None
-    curr_points = []
-    annotations = []
+    curr_traffic = {}
+    curr_points = {}
+    annotations = {}
 
     def __init__(self, session, uri='ws://10.1.1.120/traffic'):
         self.logger = logging.getLogger(__name__)
@@ -27,26 +29,33 @@ class Stratux:
         self.logger.info('Connecting to stratux')
         async with websockets.connect(self.stratux_uri) as websocket:
             self.logger.info('Connected.')
+            # traffic = Traffic(lng=174.7762, lat=-41.2865)
+            # self.update_map(traffic, 'text', clear=False)
             while True:
+                # self.update_map(traffic, 'text', clear=True)
+                # traffic.lng += 0.01
+                # traffic.lat += 0.01
                 packet = await websocket.recv()
                 logging.debug('Received packet: {}'.format(packet))
 
                 entry = json.JSONDecoder().decode(packet)  # type: dict
                 entry_lowered = dict((k.lower(), v) for k, v in entry.items())
                 traffic = Traffic(**entry_lowered)
+                self.curr_traffic[traffic.icao_addr] = traffic
                 self.session.add(traffic)
                 self.session.commit()
 
-                lat = entry_lowered.get('lat')
-                lng = entry_lowered.get('lng')
-                self.update_map(lng, lat, self.generate_label(traffic), clear=True)
+                self.update_map(traffic, self.generate_label(traffic), clear=False)
 
     @staticmethod
     def generate_label(traffic):
-        label = '{} {}\n{}'.format(
+        label = '{} {}\n{} {}@{}'.format(
             traffic.squawk if traffic.squawk else traffic.icao_addr,
             str(round(traffic.age, 1)) + 's',
-            traffic.tail if traffic.tail else '?')
+            traffic.tail if traffic.tail else '?',
+            str(traffic.track) if traffic.track else '?',
+            str(traffic.speed if traffic.speed else '?') + "kts"
+        )
         return label
 
     def launch(self):
@@ -55,10 +64,10 @@ class Stratux:
 
     def create_map(self):
         self.fig = plt.figure(figsize=(8, 8))
-        m = Basemap(projection='lcc', resolution='f', lat_0=-41.2865, lon_0=174.7762, width=1E5, height=1.2E5,
+        m = Basemap(projection='lcc', resolution='f', lat_0=-41.2865, lon_0=174.7762, width=8E4, height=1E5,
                     epsg=2113)
-        # m.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=2000, verbose=True)
-        m.shadedrelief(scale=1)
+        m.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=2000, verbose=True)
+        # m.shadedrelief(scale=1)
         m.drawcoastlines(color='gray')
         m.drawcounties(color='gray')
         m.drawstates(color='gray')
@@ -67,28 +76,49 @@ class Stratux:
         plt.show(block=False)
         plt.pause(0.1)
 
-    def update_map(self, lng, lat, label, clear=False):
+    def update_map(self, traffic, label, clear=False):
+        lat = traffic.lat
+        lng = traffic.lng
         if lat == 0 and lng == 0:
             return
 
-        if (lng, lat) in self.curr_points:
-            self.curr_points.remove((lng, lat))
-        if clear and self.scatter:
-            # Clear plot if existing
-            self.scatter.remove()
-        self.curr_points.append((lng, lat))
-        self.scatter = self.plt_map.scatter(*zip(*self.curr_points), latlon=True, alpha=0.5, marker='+')
+        self.curr_points[traffic.icao_addr] = (lng, lat)
 
-        # clear annotations
-        for ann in self.annotations:
-            ann.remove()
-        self.annotations = []
+        # update annotations
+        if traffic.icao_addr in self.annotations:
+            self.annotations[traffic.icao_addr].set_position(self.plt_map(traffic.lng, traffic.lat))
+            plt.draw()
+            # plt.pause(0.3)
+
+        if clear and self.scatter:
+            self.scatter.remove()
+            plt.draw()
+        self.scatter = self.plt_map.scatter(*zip(*self.curr_points.values()), latlon=True, marker='+')
 
         # annotate
-        for pt in self.curr_points:
-            self.annotations.append(
-                plt.gca().annotate(str(label), self.plt_map(pt[0], pt[1]), xytext=(5, 5),
-                                   textcoords='offset points'))
+        for t in self.curr_traffic.values():    # type: Traffic
+            ann = plt.annotate(self.generate_label(t), self.plt_map(t.lng, t.lat), xytext=(5, 5),
+                               textcoords='offset points',
+                               bbox=dict(boxstyle='round', fc='0.8', alpha=0.3))
+            self.annotations[t.icao_addr] = ann
+            plt.draw()
 
         plt.pause(0.1)
-        self.logger.info('Showing {} points'.format(len(self.curr_points)))
+        self.reap_traffic()
+
+    def reap_traffic(self):
+        # remove stale traffic
+        for k, t in self.curr_traffic.copy().items():    # type: Traffic
+            time_idle = datetime.utcfromtimestamp(datetime.now().timestamp()) - t.timestamp
+            seconds_idle = time_idle.total_seconds()
+            if seconds_idle > 60:
+                self.curr_traffic.pop(k)
+                if k in self.annotations:
+                    ann = self.annotations.pop(k)
+                    ann.set_visible(False)
+                    ann.remove()
+                if k in self.curr_points:
+                    self.curr_points.pop(k)
+                plt.draw()
+        plt.pause(0.1)
+
