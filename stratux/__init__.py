@@ -31,7 +31,7 @@ class Stratux:
             self.logger.info('Connected.')
             while True:
                 packet = await websocket.recv()
-                logging.debug('Received packet: {}'.format(packet))
+                logging.info('Received packet: {}'.format(packet))
 
                 entry = json.JSONDecoder().decode(packet)  # type: dict
                 entry_lowered = dict((k.lower(), v) for k, v in entry.items())
@@ -39,11 +39,13 @@ class Stratux:
                 traffic.last_seen = datetime.now()
                 self.curr_traffic[traffic.icao_addr] = traffic
 
-                self.session.add(traffic)
-                self.session.commit()
+                # self.session.add(traffic)
+                # self.session.commit()
 
                 self.update_map(traffic, clear=False)
                 self.reap_traffic()
+                plt.draw()
+                plt.pause(1/120)
 
     @staticmethod
     def generate_label(traffic):
@@ -62,7 +64,9 @@ class Stratux:
 
     def create_map(self):
         self.fig = plt.figure(figsize=(8, 8))
-        m = Basemap(projection='lcc', resolution='f', lat_0=-41.2865, lon_0=174.7762, width=8E4, height=1E5,
+        m = Basemap(projection='lcc', resolution='f',
+                    lat_0=-41.2865, lon_0=174.7762,
+                    width=1E5, height=1.5E5,
                     epsg=2113)
         m.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=2000, verbose=True)
         # m.shadedrelief(scale=1)
@@ -85,11 +89,9 @@ class Stratux:
         # update annotations
         if traffic.icao_addr in self.annotations:
             self.annotations[traffic.icao_addr].xy = (self.plt_map(traffic.lng, traffic.lat))
-            plt.draw()
 
         if clear and self.scatter:
             self.scatter.remove()
-            plt.draw()
         self.scatter = self.plt_map.scatter(*zip(*self.curr_points.values()), latlon=True, marker='+', c='red')
 
         # annotate
@@ -101,9 +103,6 @@ class Stratux:
             else:
                 self.annotations[t.icao_addr].xy = self.plt_map(t.lng, t.lat)
                 self.annotations[t.icao_addr].set_text(self.generate_label(t))
-            plt.draw()
-
-        plt.pause(0.1)
 
     def reap_traffic(self):
         # remove stale traffic
@@ -125,6 +124,4 @@ class Stratux:
         self.curr_traffic = dict(curr_traffic)
         self.annotations = dict(curr_annotations)
         self.curr_points = dict(curr_points)
-        plt.draw()
-        plt.pause(0.1)
 
