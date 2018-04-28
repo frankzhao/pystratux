@@ -35,18 +35,15 @@ class Stratux:
 
                 entry = json.JSONDecoder().decode(packet)  # type: dict
                 entry_lowered = dict((k.lower(), v) for k, v in entry.items())
-                self.logger.info("timestamp: {}".format(entry_lowered['timestamp']))
-                try:
-                    entry_lowered['timestamp'] = datetime.strptime(entry_lowered['timestamp'], '%Y-%m-%dT%H:%M:%S.%fZ')
-                except ValueError:
-                    entry_lowered['timestamp'] = datetime.strptime(entry_lowered['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
                 traffic = Traffic(**entry_lowered)
+                traffic.last_seen = datetime.now()
                 self.curr_traffic[traffic.icao_addr] = traffic
 
                 self.session.add(traffic)
                 self.session.commit()
 
                 self.update_map(traffic, clear=False)
+                self.reap_traffic()
 
     @staticmethod
     def generate_label(traffic):
@@ -90,7 +87,6 @@ class Stratux:
             self.annotations[traffic.icao_addr].xy = (self.plt_map(traffic.lng, traffic.lat))
             plt.draw()
 
-        self.reap_traffic()
         if clear and self.scatter:
             self.scatter.remove()
             plt.draw()
@@ -104,25 +100,31 @@ class Stratux:
                 self.annotations[t.icao_addr] = ann
             else:
                 self.annotations[t.icao_addr].xy = self.plt_map(t.lng, t.lat)
+                self.annotations[t.icao_addr].set_text(self.generate_label(t))
             plt.draw()
 
         plt.pause(0.1)
 
     def reap_traffic(self):
         # remove stale traffic
-        for k, t in self.curr_traffic.copy().items():    # type: Traffic
-            time_idle = datetime.utcfromtimestamp(datetime.now().timestamp()) - t.timestamp
+        curr_traffic = dict(self.curr_traffic)
+        curr_annotations = dict(self.annotations)
+        curr_points = dict(self.curr_points)
+        for k, t in curr_traffic.copy().items():    # type: Traffic
+            time_idle = datetime.now() - t.last_seen
             seconds_idle = time_idle.total_seconds()
             if seconds_idle > 60:
-                self.logger.info("Reaping stale traffic: icao: {}, tail: {}".format(t.icao_addr, t.tail))
-                del self.curr_traffic[k]
-                if k in self.annotations:
-                    ann = self.annotations.get(k)
+                self.logger.info(
+                    "Reaping stale traffic: icao: {}, tail: {} - idle for {}s".format(t.icao_addr, t.tail, seconds_idle))
+                curr_traffic.pop(k, None)
+                curr_points.pop(k, None)
+                ann = curr_annotations.pop(k, None)
+                if ann:
                     ann.xy = (0, 0)
                     ann.remove()
-                    del self.annotations[k]
-                if k in self.curr_points:
-                    del self.curr_points[k]
-                plt.draw()
+        self.curr_traffic = dict(curr_traffic)
+        self.annotations = dict(curr_annotations)
+        self.curr_points = dict(curr_points)
+        plt.draw()
         plt.pause(0.1)
 
