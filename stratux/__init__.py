@@ -31,13 +31,20 @@ class Stratux:
         async with websockets.connect(self.stratux_uri) as websocket:
             self.logger.info('Connected.')
             while True:
-                buffer = []
+                buffer = {}
                 buffer_age_ms = 0
                 buffer_start = datetime.now()
-                while len(buffer) < 20 and buffer_age_ms < 1000:
+                while len(buffer.keys()) < 10 and buffer_age_ms < 1000:
                     packet = await websocket.recv()
                     logging.debug('Received packet: {}'.format(packet))
-                    buffer.append(packet)
+
+                    entry = json.JSONDecoder().decode(packet)  # type: dict
+                    entry_lowered = dict((k.lower(), v) for k, v in entry.items())
+                    traffic = Traffic(**entry_lowered)
+
+                    # only store latest seen value of unique traffic
+                    # in buffer for performance
+                    buffer[traffic.icao_addr] = traffic
                     t_delta = (datetime.now() - buffer_start)
                     buffer_age_ms = int((t_delta.seconds * 1000) + (t_delta.microseconds / 1000))
 
@@ -45,12 +52,8 @@ class Stratux:
                 self.process_buffer(buffer)
                 buffer.clear()
 
-    def process_buffer(self, messages):
-        for packet in messages:
-            entry = json.JSONDecoder().decode(packet)  # type: dict
-
-            entry_lowered = dict((k.lower(), v) for k, v in entry.items())
-            traffic = Traffic(**entry_lowered)
+    def process_buffer(self, buffer):
+        for traffic in buffer.values():
             traffic.last_seen = datetime.now()
             self.curr_traffic[traffic.icao_addr] = traffic
 
