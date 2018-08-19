@@ -3,15 +3,13 @@ Source build and installation script.
 """
 
 from os import path, sep, walk
-from pip.download import PipSession
-from pip.req import parse_requirements
 from setuptools import setup, find_packages
 
 version = '0.0.1-dev'
 
 
 def extract_requirements(filename):
-    return [str(r.req) for r in parse_requirements(filename, session=PipSession)]
+    return open(filename, "r").read().split("\n")
 
 
 def find_package_data(source, strip=''):
