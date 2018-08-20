@@ -1,0 +1,85 @@
+from stratux.util import representable
+
+@representable
+class Situation:
+  def __init__(
+      self,
+      gpslastfixsincemidnightutc=None,
+      gpslatitude=None,
+      gpslongitude=None,
+      gpsfixquality=None,
+      gpsheightaboveellipsoid=None,
+      gpsgeoidsep=None,
+      gpssatellites=None,
+      gpssatellitestracked=None,
+      gpssatellitesseen=None,
+      gpshorizontalaccuracy=None,
+      gpsnacp=None,
+      gpsaltitudemsl=None,
+      gpsverticalaccuracy=None,
+      gpsverticalspeed=None,
+      gpslastfixlocaltime=None,
+      gpstruecourse=None,
+      gpsturnrate=None,
+      gpsgroundspeed=None,
+      gpslastgroundtracktime=None,
+      gpstime=None,
+      gpslastgpstimestratuxtime=None,
+      gpslastvalidnmeamessagetime=None,
+      gpslastvalidnmeamessage=None,
+      gpspositionsamplerate=None,
+      barotemperature=None,
+      baropressurealtitude=None,
+      baroverticalspeed=None,
+      barolastmeasurementtime=None,
+      ahrspitch=None,
+      ahrsroll=None,
+      ahrsgyroheading=None,
+      ahrsmagheading=None,
+      ahrsslipskid=None,
+      ahrsturnrate=None,
+      ahrsgload=None,
+      ahrsgloadmin=None,
+      ahrsgloadmax=None,
+      ahrslastattitudetime=None,
+      ahrsstatus=None
+  ):
+    self.gpsLastFixSinceMidnightUTC = gpslastfixsincemidnightutc
+    self.gpsLatitude = gpslatitude
+    self.gpsLongitude = gpslongitude
+    self.gpsFixQuality = gpsfixquality
+    self.gpsHeightAboveEllipsoid = gpsheightaboveellipsoid
+    self.gpsGeoidSep = gpsgeoidsep
+    self.gpsSatellites = gpssatellites
+    self.gpsSatellitesTracked = gpssatellitestracked
+    self.gpsSatellitesSeen = gpssatellitesseen
+    self.gpsHorizontalAccuracy = gpshorizontalaccuracy
+    self.gpsNACp = gpsnacp
+    self.gpsAltitudeMSL = gpsaltitudemsl
+    self.gpsVerticalAccuracy = gpsverticalaccuracy
+    self.gpsVerticalSpeed = gpsverticalspeed
+    self.gpsLastFixLocalTime = gpslastfixlocaltime
+    self.gpsTrueCourse = gpstruecourse
+    self.gpsTurnRate = gpsturnrate
+    self.gpsGroundSpeed = gpsgroundspeed
+    self.gpsLastGroundTrackTime = gpslastgroundtracktime
+    self.gpsTime = gpstime
+    self.gpsLastgpsTimeStratuxTime = gpslastgpstimestratuxtime
+    self.gpsLastValidNMEAMessageTime = gpslastvalidnmeamessagetime
+    self.gpsLastValidNMEAMessage = gpslastvalidnmeamessage
+    self.gpsPositionSampleRate = gpspositionsamplerate
+    self.baroTemperature = barotemperature
+    self.baroPressureAltitude = baropressurealtitude
+    self.baroVerticalSpeed = baroverticalspeed
+    self.baroLastMeasurementTime = barolastmeasurementtime
+    self.ahrsPitch = ahrspitch
+    self.ahrsRoll = ahrsroll
+    self.ahrsGyroHeading = ahrsgyroheading
+    self.ahrsMagHeading = ahrsmagheading
+    self.ahrsSlipSkid = ahrsslipskid
+    self.ahrsTurnRate = ahrsturnrate
+    self.ahrsGLoad = ahrsgload
+    self.ahrsGLoadMin = ahrsgloadmin
+    self.ahrsGLoadMax = ahrsgloadmax
+    self.ahrsLastAttitudeTime = ahrslastattitudetime
+    self.ahrsStatus = ahrsstatus

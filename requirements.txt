@@ -1,6 +1,7 @@
 asyncio
 websockets
 alembic
+requests
 psycopg2
 matplotlib
 basemap
