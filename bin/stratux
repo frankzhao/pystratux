@@ -1,10 +1,17 @@
 #! python
 import logging
+from argparse import ArgumentParser
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from stratux import Stratux
 
 if __name__ == '__main__':
+    parser = ArgumentParser("Stratux ADS-B viewer")
+    parser.add_argument('-H', '--host', dest='host',
+                        help='Stratux hostname or IP', default='10.1.1.120')
+
+    args = parser.parse_args()
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info("Creating database connection")
@@ -16,4 +23,4 @@ if __name__ == '__main__':
     logging.getLogger('sqlalchemy').setLevel(logging.WARN)
 
     logger.info("Launching stratux")
-    Stratux(session).launch()
+    Stratux(session, host=args.host).launch()

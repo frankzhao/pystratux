@@ -35,8 +35,7 @@ class Stratux:
   async def connect(self):
     self.logger.info('Connecting to stratux')
     traffic_uri = "ws://" + self.stratux_host + "/traffic"
-    async with websockets.connect(
-                "ws://" + traffic_uri + "/traffic") as websocket:
+    async with websockets.connect(traffic_uri) as websocket:
       self.logger.info('Connected.')
       while True:
         buffer = {}
@@ -171,7 +170,7 @@ class Stratux:
 
   def update_situation(self):
     response = requests.get("http://" + self.stratux_host + "/getSituation")
-    if response.code != 200:
+    if response.status_code != 200:
       self.logger.error("Unable to get current situation: {} - {}",
                         response.status_code, response.text)
       return
