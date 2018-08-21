@@ -54,7 +54,7 @@ class Traffic(Base):
                  speed=None, speed_valid=None, vvel=None, timestamp=None, prioritystatus=None, age=None,
                  agelastalt=None, last_seen=None, last_alt=None, last_gnssdiff=None, last_gnssdiffalt=None,
                  last_speed=None, last_source=None, extrapolatedposition=None, bearingdist_valid=None,
-                 bearing=None, distance=None):
+                 bearing=None, distance=None, buffer_timestamp=None):
         self.id = id
         self.icao_addr = icao_addr
         self.reg = reg
@@ -91,3 +91,4 @@ class Traffic(Base):
         self.bearingdist_valid = bearingdist_valid
         self.bearing = bearing
         self.distance = distance
+        self.buffer_timestamp = buffer_timestamp

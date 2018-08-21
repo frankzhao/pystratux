@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime
+from time import sleep
 
 import websockets
 
@@ -14,16 +15,13 @@ logging.getLogger('sqlalchemy').setLevel(logging.WARN)
 
 
 class Stratux:
-  fig = None
   ax = None
   plt_map = None
   scatter = None
   situation = None
   renderer = None
-  curr_traffic = {}
-  curr_points = {}
-  annotations = {}
-  center_lng, center_lat = 174.7762, -41.2865  # WLG
+  # center_lng, center_lat = 174.7762, -41.2865  # WLG
+  center_lng, center_lat = 149.1934, -35.3052  # CBR
   # default uri = 'ws://10.1.1.120/traffic'
   stratux_host = '10.1.1.120'  # 192.168.10.1
 
@@ -75,12 +73,33 @@ class Stratux:
         return
 
   def launch_replay(self):
-    self.renderer.create_map()
+    self.situation = Situation()
+    self.situation.gpsLongitude = self.center_lng
+    self.situation.gpsLatitude = self.center_lat
+    self.renderer.create_map(update_situation=False)
     try:
-      asyncio.get_event_loop().run_until_complete(self.replay())
+      self.replay()
     except KeyboardInterrupt:
       return
 
   # Replay from database
-  def replay(self):
-    pass
+  def replay(self, buffer_size=25):
+    traffic = self.session.query(Traffic).filter(
+        Traffic.position_valid,
+        Traffic.speed_valid,
+        Traffic.bearingdist_valid,
+        Traffic.tail is not None,
+        Traffic.tail != ''
+    ).order_by(Traffic.last_seen.asc()).all()
+    self.logger.info("Found {} traffic entries.".format(len(traffic)))
+
+    i = 0
+    buffer = {}
+    for t in traffic:
+      self.logger.debug("Plotting: {}".format(t.tail))
+      buffer[t.icao_addr] = t
+      i = i+1
+      if i == buffer_size:
+        self.renderer.process_buffer(buffer, save=False)
+        buffer.clear()
+        i = 0
