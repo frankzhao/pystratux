@@ -5,6 +5,7 @@ from mpl_toolkits.basemap import Basemap
 
 from stratux.model import LoggedObject
 from stratux.operations import Operations
+from stratux.data import CITIES_BY_CODE
 
 
 class Renderer(LoggedObject):
@@ -22,7 +23,20 @@ class Renderer(LoggedObject):
     self.stratux = stratux
     self.operations = Operations(stratux)
 
-  def create_map(self, update_situation=True, zoom=1, gis=False):
+  def create_map(self, city=None, update_situation=True, zoom=1, gis=False):
+    """
+    Create the map
+    :param city: City for map center
+    :type city: stratux.model.location.City
+    :param update_situation: Use current AHRS/GPS/BARO situation from stratux for map center
+    :type update_situation: bool
+    :param zoom: Zoom level
+    :type zoom: int
+    :param gis: Use ArcGIS basemap instead of shadedrelief
+    :type gis: bool
+    :return:
+    """
+    city = CITIES_BY_CODE.get(city)
     self.bbox_coords = [
       self.stratux.situation.gpsLatitude - zoom, self.stratux.situation.gpsLongitude - zoom,
       self.stratux.situation.gpsLatitude + zoom, self.stratux.situation.gpsLongitude + zoom
@@ -32,16 +46,15 @@ class Renderer(LoggedObject):
       self.operations.update_situation()
     self.fig, self.ax = plt.subplots()
     m = Basemap(projection='merc', resolution='f',
-                lat_0=self.stratux.situation.gpsLatitude,
-                lon_0=self.stratux.situation.gpsLongitude,
+                lat_0=self.stratux.situation.gpsLatitude if update_situation else city.center_lat,
+                lon_0=self.stratux.situation.gpsLongitude if update_situation else city.center_lng,
                 llcrnrlat=self.bbox_coords[0],
                 llcrnrlon=self.bbox_coords[1],
                 urcrnrlat=self.bbox_coords[2],
                 urcrnrlon=self.bbox_coords[3],
                 width=1E5, height=1.5E5)
     if gis:
-      # m.epsg = 2113   # WLG
-      m.epsg = 5825   # CBR
+      m.epsg = city.epsg
       m.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=2000, verbose=True)
     else:
       m.shadedrelief(scale=1)

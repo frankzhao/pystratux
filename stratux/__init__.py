@@ -61,8 +61,8 @@ class Stratux:
         self.renderer.process_buffer(buffer)
         buffer.clear()
 
-  def launch(self, gis=False, zoom=1):
-    self.renderer.create_map(gis=gis, zoom=zoom)
+  def launch(self, gis=False, zoom=1, city=None):
+    self.renderer.create_map(gis=gis, zoom=zoom, city=city)
     while True:
       try:
         asyncio.get_event_loop().run_until_complete(self.connect())
@@ -72,11 +72,11 @@ class Stratux:
       except KeyboardInterrupt:
         return
 
-  def launch_replay(self, gis=False, zoom=1):
+  def launch_replay(self, gis=False, zoom=1, city=None):
     self.situation = Situation()
     self.situation.gpsLongitude = self.center_lng
     self.situation.gpsLatitude = self.center_lat
-    self.renderer.create_map(update_situation=False, gis=gis, zoom=zoom)
+    self.renderer.create_map(update_situation=False, gis=gis, zoom=zoom, city=city)
     try:
       self.replay()
     except KeyboardInterrupt:

@@ -8,8 +8,9 @@ from stratux import Stratux
 if __name__ == '__main__':
     parser = ArgumentParser("Stratux ADS-B viewer")
     parser.add_argument('-H', '--host', dest='host', help='Stratux hostname or IP', default='10.1.1.120')
-    parser.add_argument('-g', '--gis', dest='gis', help='Use ArcGIS image', default=False)
+    parser.add_argument('-g', '--arcgis', dest='gis', help='Use ArcGIS image', action="store_true", default=False)
     parser.add_argument('-z', '--zoom', dest='zoom', help='Use ArcGIS image', default=1, type=int)
+    parser.add_argument('-c', '--city', dest='city', help='City for map center', default="WLG")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
@@ -23,4 +24,4 @@ if __name__ == '__main__':
     logging.getLogger('sqlalchemy').setLevel(logging.WARN)
 
     logger.info("Launching stratux monitor")
-    Stratux(session, host=args.host).launch(gis=args.gis, zoom=args.zoom)
+    Stratux(session, host=args.host).launch(gis=args.gis, zoom=args.zoom, city=city)
