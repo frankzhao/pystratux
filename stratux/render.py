@@ -22,7 +22,7 @@ class Renderer(LoggedObject):
     self.stratux = stratux
     self.operations = Operations(stratux)
 
-  def create_map(self, update_situation=True, zoom=1):
+  def create_map(self, update_situation=True, zoom=1, gis=False):
     self.bbox_coords = [
       self.stratux.situation.gpsLatitude - zoom, self.stratux.situation.gpsLongitude - zoom,
       self.stratux.situation.gpsLatitude + zoom, self.stratux.situation.gpsLongitude + zoom
@@ -38,11 +38,13 @@ class Renderer(LoggedObject):
                 llcrnrlon=self.bbox_coords[1],
                 urcrnrlat=self.bbox_coords[2],
                 urcrnrlon=self.bbox_coords[3],
-                width=1E5, height=1.5E5,
-                # epsg=2113)
-                )
-    # m.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=2000, verbose=True)
-    m.shadedrelief(scale=1)
+                width=1E5, height=1.5E5)
+    if gis:
+      # m.epsg = 2113   # WLG
+      m.epsg = 5825   # CBR
+      m.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=2000, verbose=True)
+    else:
+      m.shadedrelief(scale=1)
     m.drawcoastlines(color='gray')
     m.drawcounties(color='gray')
     m.drawstates(color='gray')

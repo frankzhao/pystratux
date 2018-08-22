@@ -2,8 +2,8 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from time import sleep
 
+import matplotlib.pyplot as plt
 import websockets
 
 from stratux.model.situation import Situation
@@ -61,8 +61,8 @@ class Stratux:
         self.renderer.process_buffer(buffer)
         buffer.clear()
 
-  def launch(self):
-    self.renderer.create_map()
+  def launch(self, gis=False, zoom=1):
+    self.renderer.create_map(gis=gis, zoom=zoom)
     while True:
       try:
         asyncio.get_event_loop().run_until_complete(self.connect())
@@ -72,11 +72,11 @@ class Stratux:
       except KeyboardInterrupt:
         return
 
-  def launch_replay(self):
+  def launch_replay(self, gis=False, zoom=1):
     self.situation = Situation()
     self.situation.gpsLongitude = self.center_lng
     self.situation.gpsLatitude = self.center_lat
-    self.renderer.create_map(update_situation=False)
+    self.renderer.create_map(update_situation=False, gis=gis, zoom=zoom)
     try:
       self.replay()
     except KeyboardInterrupt:
@@ -98,8 +98,14 @@ class Stratux:
     for t in traffic:
       self.logger.debug("Plotting: {}".format(t.tail))
       buffer[t.icao_addr] = t
-      i = i+1
+      i = i + 1
       if i == buffer_size:
         self.renderer.process_buffer(buffer, save=False)
         buffer.clear()
         i = 0
+
+    # Keep map open
+    try:
+      plt.show(block=True)
+    except KeyboardInterrupt:
+      return
