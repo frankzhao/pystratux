@@ -37,13 +37,22 @@ class Renderer(LoggedObject):
     :return:
     """
     city = CITIES_BY_CODE.get(city)
-    self.bbox_coords = [
-      self.stratux.situation.gpsLatitude - zoom, self.stratux.situation.gpsLongitude - zoom,
-      self.stratux.situation.gpsLatitude + zoom, self.stratux.situation.gpsLongitude + zoom
-    ]
 
     if update_situation:
       self.operations.update_situation()
+      if self.stratux.situation.gpsFixQuality == 0:
+        self.logger.warn("GPS fix is bad, using predetermined coordinates!")
+        self.stratux.situation.gpsLatitude  = city.center_lat
+        self.stratux.situation.gpsLongitude = city.center_lng
+      self.bbox_coords = [
+        self.stratux.situation.gpsLatitude - zoom, self.stratux.situation.gpsLongitude - zoom,
+        self.stratux.situation.gpsLatitude + zoom, self.stratux.situation.gpsLongitude + zoom
+      ]
+    else:
+      self.bbox_coords = [
+        city.center_lat - zoom, city.center_lng - zoom,
+        city.center_lat + zoom, city.center_lng + zoom
+      ]
     self.fig, self.ax = plt.subplots()
     m = Basemap(projection='merc', resolution='f',
                 lat_0=self.stratux.situation.gpsLatitude if update_situation else city.center_lat,
